@@ -92,12 +92,20 @@ class TranscriptSegment {
   }
 }
 
+enum ScriptureDetectionType {
+  reference, // Explicit scripture citation e.g. "Romans 8:28"
+  turnTo, // Preacher prompt e.g. "Turn with me to..."
+  quote, // Direct recitation of verse text
+  suggestion, // Contextual AI allusion
+}
+
 class ScriptureMention {
   final String id;
   final String sermonId;
   final String citation; // e.g. "Romans 8:28"
   final String verseText;
   final String? timestamp;
+  final String type; // 'reference', 'turn_to', 'quote', 'suggestion'
 
   ScriptureMention({
     required this.id,
@@ -105,7 +113,22 @@ class ScriptureMention {
     required this.citation,
     required this.verseText,
     this.timestamp,
+    this.type = 'reference',
   });
+
+  String get typeLabel {
+    switch (type) {
+      case 'turn_to':
+        return 'Turn-To';
+      case 'quote':
+        return 'Quote';
+      case 'suggestion':
+        return 'Suggestion';
+      case 'reference':
+      default:
+        return 'Reference';
+    }
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -114,6 +137,7 @@ class ScriptureMention {
       'citation': citation,
       'verse_text': verseText,
       'timestamp': timestamp,
+      'type': type,
     };
   }
 
@@ -124,6 +148,7 @@ class ScriptureMention {
       citation: map['citation'],
       verseText: map['verse_text'],
       timestamp: map['timestamp'],
+      type: map['type'] ?? 'reference',
     );
   }
 }

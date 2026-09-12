@@ -79,16 +79,28 @@ class ScriptureDetectorService {
     );
   }
 
-  /// Detect all unique Bible references in [text].
-  ///
-  /// Returns a list of canonical citation strings, e.g.
-  /// `["Romans 8:28", "Philippians 4:13", "Psalm 23"]`.
+  static final RegExp _turnToCue = RegExp(
+    r'\b(turn(?:\s+with\s+me)?(?:\s+in\s+your\s+bibles?)?\s+to|open(?:\s+your)?(?:\s+bibles?)?\s+to|look\s+at|read\s+with\s+me|fungua|soma)\b',
+    caseSensitive: false,
+  );
+
+  static final RegExp _quoteCue = RegExp(
+    r'\b(says?|written|promises?|reads?|anasema|imeandikwa)\b',
+    caseSensitive: false,
+  );
+
+  /// Detect all unique Bible references in [text] with simple string citations.
   List<String> detectReferences(String text) {
+    return detectDetailedReferences(text).map((d) => d.citation).toList();
+  }
+
+  /// Detect all unique Bible references with classification type ('reference', 'turn_to', 'quote').
+  List<DetectedScripture> detectDetailedReferences(String text) {
     if (text.trim().isEmpty) return [];
 
     final matches = _referencePattern.allMatches(text);
     final seen = <String>{};
-    final refs = <String>[];
+    final refs = <DetectedScripture>[];
 
     for (final match in matches) {
       final book = _normalizeCase(match.group(1)!.trim());
@@ -108,7 +120,20 @@ class ScriptureDetectorService {
       final key = ref.toLowerCase();
       if (!seen.contains(key)) {
         seen.add(key);
-        refs.add(ref);
+
+        // Analyze surrounding text (window of 60 chars before match) for cues
+        final startPos = match.start;
+        final windowStart = (startPos - 60).clamp(0, text.length);
+        final contextPrefix = text.substring(windowStart, startPos);
+
+        String type = 'reference';
+        if (_turnToCue.hasMatch(contextPrefix)) {
+          type = 'turn_to';
+        } else if (_quoteCue.hasMatch(contextPrefix)) {
+          type = 'quote';
+        }
+
+        refs.add(DetectedScripture(citation: ref, type: type));
       }
     }
 
@@ -124,3 +149,15 @@ class ScriptureDetectorService {
     }).join(' ');
   }
 }
+
+/// Rich detection result containing citation and classification type.
+class DetectedScripture {
+  final String citation;
+  final String type; // 'reference', 'turn_to', 'quote', 'suggestion'
+
+  const DetectedScripture({
+    required this.citation,
+    this.type = 'reference',
+  });
+}
+

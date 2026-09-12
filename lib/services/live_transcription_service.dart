@@ -93,23 +93,24 @@ class LiveTranscriptionService {
 
       _chunkTranscripts.add(transcript);
 
-      // Detect Bible references in the transcribed text
-      final refs = _detector.detectReferences(transcript);
-      for (final ref in refs) {
-        final key = ref.toLowerCase();
+      // Detect Bible references in the transcribed text with classification
+      final detailedRefs = _detector.detectDetailedReferences(transcript);
+      for (final detected in detailedRefs) {
+        final key = detected.citation.toLowerCase();
         if (_detectedCitationKeys.contains(key)) continue;
         _detectedCitationKeys.add(key);
 
         // Look up verse text from local Bible database
-        final verse = await _bibleService.fetchVerseText(ref);
+        final verse = await _bibleService.fetchVerseText(detected.citation);
         final timestamp = _formatTimestamp(chunk.startSeconds);
 
         final mention = ScriptureMention(
           id: 'live_${DateTime.now().millisecondsSinceEpoch}_${_detectedCitationKeys.length}',
           sermonId: 'current',
-          citation: ref,
+          citation: detected.citation,
           verseText: verse.text,
           timestamp: timestamp,
+          type: detected.type,
         );
 
         onScriptureDetected?.call(mention);

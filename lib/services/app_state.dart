@@ -217,6 +217,18 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  Future<String> askSermonQuestion(String question) async {
+    final transcript = _currentSegments.map((s) => '${s.speaker}: ${s.text}').join('\n');
+    return await _agentService.askSermonQuestion(
+      question: question,
+      sermonTitle: _currentSermon?.title ?? 'Sunday Sermon',
+      transcript: transcript,
+      sermonSummary: _currentNotes?.summary ?? 'Sermon summary',
+      apiKey: _openRouterApiKey,
+      model: _openRouterModel,
+    );
+  }
+
   void resetToHome() {
     _recordingStatus = ServiceRecordingStatus.idle;
     _liveTranscriptionService?.onScriptureDetected = null;

@@ -27,7 +27,8 @@ Given a raw sermon transcript, output ONLY a valid JSON object with the followin
     {
       "citation": "Romans 8:28",
       "verseText": "And we know that in all things God works for the good...",
-      "timestamp": "00:04:12"
+      "timestamp": "00:04:12",
+      "type": "reference"
     }
   ],
   "segments": [
@@ -88,6 +89,59 @@ Return ONLY pure JSON without markdown codeblock syntax.
     }
   }
 
+  /// Interactive sermon Q&A assistant (inspired by Velora's "Apply what you've learned").
+  Future<String> askSermonQuestion({
+    required String question,
+    required String sermonTitle,
+    required String transcript,
+    required String sermonSummary,
+    required String apiKey,
+    String model = 'anthropic/claude-3.5-sonnet',
+  }) async {
+    if (apiKey.trim().isEmpty) {
+      return 'I would love to help you reflect on "$sermonTitle"! To enable live AI answers, please configure your OpenRouter API key in Settings.';
+    }
+
+    final systemPrompt = '''
+You are Amanda, an insightful Christian AI companion. You are discussing the sermon titled "$sermonTitle".
+The summary of the message is: "$sermonSummary".
+Answer the user's question with warmth, biblical depth, and direct relevance to what was preached in the sermon transcript.
+Keep answers concise (2-4 paragraphs), practical, and encouraging.
+Transcript:
+$transcript
+''';
+
+    try {
+      final response = await http.post(
+        Uri.parse(openRouterUrl),
+        headers: {
+          'Authorization': 'Bearer $apiKey',
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://github.com/Thee-Unruly/PitSpot',
+          'X-Title': 'Amanda PitSpot',
+        },
+        body: jsonEncode({
+          'model': model,
+          'messages': [
+            {'role': 'system', 'content': systemPrompt},
+            {'role': 'user', 'content': question},
+          ],
+          'temperature': 0.5,
+        }),
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['choices'][0]['message']['content'] ?? 'No response received.';
+      } else {
+        return 'Could not reach Amanda AI. Please check your API key and connection.';
+      }
+    } catch (e) {
+      debugPrint('Sermon Q&A Exception: $e');
+      return 'Unable to process your question at this moment. Please try again.';
+    }
+  }
+
   String _cleanJsonOutput(String input) {
     var str = input.trim();
     if (str.startsWith('```json')) {
@@ -110,6 +164,7 @@ Return ONLY pure JSON without markdown codeblock syntax.
         citation: s['citation'] ?? '',
         verseText: s['verseText'] ?? '',
         timestamp: s['timestamp'],
+        type: s['type'] ?? 'reference',
       );
     }).toList();
 

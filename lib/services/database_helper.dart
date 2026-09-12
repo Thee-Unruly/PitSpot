@@ -62,7 +62,8 @@ class DatabaseHelper {
         sermon_id $textType,
         citation $textType,
         verse_text $textType,
-        timestamp $textNullable
+        timestamp $textNullable,
+        type $textNullable
       )
     ''');
 
