@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/models.dart';
 
@@ -78,11 +79,11 @@ Return ONLY pure JSON without markdown codeblock syntax.
         final parsed = jsonDecode(cleanJsonStr);
         return _formatAnalysisResults(sermonId, parsed);
       } else {
-        print('OpenRouter API Error: ${response.statusCode} - ${response.body}');
+        debugPrint('OpenRouter API Error: ${response.statusCode} - ${response.body}');
         return _generateFallbackAnalysis(sermonId, rawTranscript);
       }
     } catch (e) {
-      print('OpenRouter Exception: $e');
+      debugPrint('OpenRouter Exception: $e');
       return _generateFallbackAnalysis(sermonId, rawTranscript);
     }
   }

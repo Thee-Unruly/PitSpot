@@ -22,7 +22,7 @@ class ProcessingScreen extends StatelessWidget {
                 height: 90,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.15),
+                  color: Colors.amber.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: const CircularProgressIndicator(

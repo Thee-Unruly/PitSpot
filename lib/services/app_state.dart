@@ -6,6 +6,9 @@ import 'audio_recording_service.dart';
 import 'database_helper.dart';
 import 'openrouter_agent_service.dart';
 import 'stt_service.dart';
+import 'bible_service.dart';
+import 'live_transcription_service.dart';
+import 'scripture_detector_service.dart';
 
 enum ServiceRecordingStatus { idle, recording, processing, complete }
 
@@ -14,6 +17,9 @@ class AppState extends ChangeNotifier {
   final STTService _sttService = STTService();
   final OpenRouterAgentService _agentService = OpenRouterAgentService();
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  final ScriptureDetectorService _scriptureDetector = ScriptureDetectorService();
+  final BibleService _bibleService = BibleService();
+  LiveTranscriptionService? _liveTranscriptionService;
 
   ServiceRecordingStatus _recordingStatus = ServiceRecordingStatus.idle;
   int _recordingSeconds = 0;
@@ -23,7 +29,7 @@ class AppState extends ChangeNotifier {
   String _openRouterModel = 'anthropic/claude-3.5-sonnet';
   String _whisperApiKey = '';
 
-  List<ScriptureMention> _liveDetectedScriptures = [];
+  final List<ScriptureMention> _liveDetectedScriptures = [];
   Sermon? _currentSermon;
   SermonNotes? _currentNotes;
   List<TranscriptSegment> _currentSegments = [];
@@ -86,32 +92,32 @@ class AppState extends ChangeNotifier {
     _recordingSeconds = 0;
     notifyListeners();
 
-    try {
-      await _audioService.startRecording((seconds) {
-        _recordingSeconds = seconds;
+    // Set up live transcription for real-time scripture detection
+    _liveTranscriptionService?.onScriptureDetected = null;
+    final apiKey = _whisperApiKey.isNotEmpty ? _whisperApiKey : _openRouterApiKey;
+    _liveTranscriptionService = LiveTranscriptionService(
+      sttService: _sttService,
+      detector: _scriptureDetector,
+      bibleService: _bibleService,
+    );
+    _liveTranscriptionService!.configure(apiKey: apiKey);
+    _liveTranscriptionService!.onScriptureDetected = (mention) {
+      _liveDetectedScriptures.add(mention);
+      notifyListeners();
+    };
 
-        // Simulate real-time silent scripture detection popups at intervals
-        if (seconds == 15) {
-          _liveDetectedScriptures.add(ScriptureMention(
-            id: 'live_1',
-            sermonId: 'current',
-            citation: 'Romans 8:28',
-            verseText: 'And we know that in all things God works for the good of those who love him...',
-            timestamp: '00:00:15',
-          ));
-        } else if (seconds == 35) {
-          _liveDetectedScriptures.add(ScriptureMention(
-            id: 'live_2',
-            sermonId: 'current',
-            citation: 'Philippians 4:13',
-            verseText: 'I can do all things through Christ who strengthens me.',
-            timestamp: '00:00:35',
-          ));
-        }
-        notifyListeners();
-      });
+    try {
+      await _audioService.startRecording(
+        (seconds) {
+          _recordingSeconds = seconds;
+          notifyListeners();
+        },
+        onChunkReady: (chunkPath, chunkStartSeconds) {
+          _liveTranscriptionService?.enqueueChunk(chunkPath, chunkStartSeconds);
+        },
+      );
     } catch (e) {
-      print('Failed to start recording: $e');
+      debugPrint('Failed to start recording: $e');
     }
   }
 
@@ -134,13 +140,24 @@ class AppState extends ChangeNotifier {
     );
     _currentSermon = newSermon;
 
-    // Step 1: STT
-    _processingStep = 'Transcribing service audio via Whisper Speech-to-Text...';
+    // Step 1: Assemble transcript from live chunk-by-chunk transcription
+    _processingStep = 'Assembling transcript from live capture...';
     notifyListeners();
-    final transcriptText = await _sttService.transcribeAudio(
-      audioPath: audioPath ?? '',
-      apiKey: _whisperApiKey.isNotEmpty ? _whisperApiKey : _openRouterApiKey,
-    );
+
+    String transcriptText = '';
+    if (_liveTranscriptionService != null) {
+      transcriptText = await _liveTranscriptionService!.finalize();
+    }
+
+    // Fall back to full-file Whisper transcription if live transcript is empty
+    if (transcriptText.trim().isEmpty) {
+      _processingStep = 'Transcribing service audio via Whisper Speech-to-Text...';
+      notifyListeners();
+      transcriptText = await _sttService.transcribeAudio(
+        audioPath: audioPath ?? '',
+        apiKey: _whisperApiKey.isNotEmpty ? _whisperApiKey : _openRouterApiKey,
+      );
+    }
 
     // Step 2: OpenRouter AI Agent Analysis
     _processingStep = 'Analyzing sermon timeline & detecting scripture mentions via OpenRouter...';
@@ -202,6 +219,8 @@ class AppState extends ChangeNotifier {
 
   void resetToHome() {
     _recordingStatus = ServiceRecordingStatus.idle;
+    _liveTranscriptionService?.onScriptureDetected = null;
+    _liveTranscriptionService = null;
     notifyListeners();
   }
 }

@@ -1,19 +1,29 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class STTService {
+  /// Transcribe audio from a file using OpenAI Whisper.
+  ///
+  /// When [useFallback] is true (default), returns a hardcoded sample transcript
+  /// if the API call fails or no API key is provided. This preserves the demo
+  /// experience when no credentials are configured.
+  ///
+  /// Set [useFallback] to false for live chunk transcription where returning
+  /// sample data would cause false-positive scripture detections.
   Future<String> transcribeAudio({
     required String audioPath,
     required String apiKey,
+    bool useFallback = true,
   }) async {
     final file = File(audioPath);
     if (!await file.exists()) {
-      return _fallbackTranscript();
+      return useFallback ? _fallbackTranscript() : '';
     }
 
     if (apiKey.trim().isEmpty) {
-      return _fallbackTranscript();
+      return useFallback ? _fallbackTranscript() : '';
     }
 
     try {
@@ -31,14 +41,14 @@ class STTService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['text'] ?? _fallbackTranscript();
+        return data['text'] ?? (useFallback ? _fallbackTranscript() : '');
       } else {
-        print('Whisper STT Error: ${response.statusCode} - ${response.body}');
-        return _fallbackTranscript();
+        debugPrint('Whisper STT Error: ${response.statusCode} - ${response.body}');
+        return useFallback ? _fallbackTranscript() : '';
       }
     } catch (e) {
-      print('STT Service Exception: $e');
-      return _fallbackTranscript();
+      debugPrint('STT Service Exception: $e');
+      return useFallback ? _fallbackTranscript() : '';
     }
   }
 
