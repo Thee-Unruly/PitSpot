@@ -4,6 +4,7 @@ import 'services/app_state.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_service_screen.dart';
 import 'screens/sermon_notes_screen.dart';
+import 'screens/ask_velora_screen.dart';
 import 'screens/devotional_screen.dart';
 import 'screens/bible_reader_screen.dart';
 
@@ -12,18 +13,18 @@ void main() {
   runApp(
     ChangeNotifierProvider(
       create: (_) => AppState(),
-      child: const AmandaApp(),
+      child: const VeloraApp(),
     ),
   );
 }
 
-class AmandaApp extends StatelessWidget {
-  const AmandaApp({super.key});
+class VeloraApp extends StatelessWidget {
+  const VeloraApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Amanda - Sermon Pitstop Companion',
+      title: 'Velora - Sermon Pitstop Companion',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       home: const MainNavigationShell(),
@@ -44,6 +45,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   final List<Widget> _screens = const [
     HomeServiceScreen(),
     SermonNotesScreen(),
+    AskVeloraScreen(),
     DevotionalScreen(),
     BibleReaderScreen(),
   ];
@@ -53,9 +55,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     final appState = Provider.of<AppState>(context);
 
     // Auto switch to Bible Reader if deep-linked reference is set
-    if (appState.targetBibleReference != null && _currentIndex != 3) {
+    if (appState.targetBibleReference != null && appState.targetBibleReference!.isNotEmpty && _currentIndex != 4) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        setState(() => _currentIndex = 3);
+        setState(() => _currentIndex = 4);
       });
     }
 
@@ -71,24 +73,29 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         },
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.sensors),
-            activeIcon: Icon(Icons.sensors, color: AppTheme.primaryAmber),
-            label: 'Service Relay',
+            icon: Icon(Icons.wb_sunny_outlined),
+            activeIcon: Icon(Icons.wb_sunny, color: AppTheme.primaryAmber),
+            label: 'Daily',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.psychology_outlined),
-            activeIcon: Icon(Icons.psychology, color: AppTheme.primaryAmber),
-            label: 'Notes & AI',
+            icon: Icon(Icons.description_outlined),
+            activeIcon: Icon(Icons.description, color: AppTheme.primaryAmber),
+            label: 'Worship',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_outline),
-            activeIcon: Icon(Icons.favorite, color: AppTheme.primaryAmber),
+            icon: Icon(Icons.chat_bubble_outline),
+            activeIcon: Icon(Icons.chat_bubble, color: AppTheme.primaryAmber),
+            label: 'Ask Velora',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.auto_awesome_outlined),
+            activeIcon: Icon(Icons.auto_awesome, color: AppTheme.primaryAmber),
             label: 'Devotional',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.menu_book_outlined),
             activeIcon: Icon(Icons.menu_book, color: AppTheme.primaryAmber),
-            label: 'Smart Bible',
+            label: 'Bible',
           ),
         ],
       ),

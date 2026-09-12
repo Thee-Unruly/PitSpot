@@ -2,22 +2,37 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/models.dart';
+import 'bible_service.dart';
+import 'scripture_detector_service.dart';
 
 class OpenRouterAgentService {
   final String openRouterUrl = 'https://openrouter.ai/api/v1/chat/completions';
+  final String groqUrl = 'https://api.groq.com/openai/v1/chat/completions';
+  final ScriptureDetectorService _detector = ScriptureDetectorService();
+  final BibleService _bibleService = BibleService();
+
+  bool _isGroqKey(String key) => key.trim().startsWith('gsk_');
 
   Future<Map<String, dynamic>> analyzeSermonTranscript({
     required String sermonId,
     required String rawTranscript,
     required String apiKey,
-    String model = 'anthropic/claude-3.5-sonnet',
+    String model = 'openai/gpt-oss-120b',
   }) async {
-    if (apiKey.trim().isEmpty) {
-      return _generateFallbackAnalysis(sermonId, rawTranscript);
+    final cleanTranscript = rawTranscript.trim();
+
+    if (apiKey.trim().isEmpty || cleanTranscript.isEmpty) {
+      return await _generateDynamicTranscriptAnalysis(sermonId, cleanTranscript);
     }
 
+    final isGroq = _isGroqKey(apiKey);
+    final endpoint = isGroq ? groqUrl : openRouterUrl;
+    final targetModel = isGroq
+        ? (model.startsWith('llama-') ? 'openai/gpt-oss-120b' : model)
+        : model;
+
     final systemPrompt = '''
-You are Amanda, an AI sermon assistant for church members and service teams.
+You are Velora, an insightful sermon assistant for church members and pastors.
 Given a raw sermon transcript, output ONLY a valid JSON object with the following schema:
 {
   "summary": "A concise 2-3 sentence overview of the sermon theme",
@@ -35,7 +50,7 @@ Given a raw sermon transcript, output ONLY a valid JSON object with the followin
     {
       "start": "00:00:10",
       "end": "00:01:30",
-      "speaker": "Pastor",
+      "speaker": "Preacher",
       "text": "Segment text here...",
       "tags": ["key_point", "scripture_reference", "joke", "altar_call", "quotable"],
       "verseIds": ["Romans 8:28"]
@@ -51,27 +66,37 @@ Given a raw sermon transcript, output ONLY a valid JSON object with the followin
     }
   ]
 }
-Return ONLY pure JSON without markdown codeblock syntax.
+Return ONLY pure JSON without markdown codeblock formatting.
 ''';
 
     try {
+      final headers = <String, String>{
+        'Authorization': 'Bearer ${apiKey.trim()}',
+        'Content-Type': 'application/json',
+      };
+      if (!isGroq) {
+        headers['HTTP-Referer'] = 'https://velora.bible';
+        headers['X-Title'] = 'Velora Bible Companion';
+      }
+
+      final body = <String, dynamic>{
+        'model': targetModel,
+        'messages': [
+          {'role': 'system', 'content': systemPrompt},
+          {'role': 'user', 'content': 'Analyze this sermon transcript:\n\n$cleanTranscript'},
+        ],
+        'temperature': 0.2,
+      };
+
+      if (isGroq) {
+        body['response_format'] = {'type': 'json_object'};
+      }
+
       final response = await http.post(
-        Uri.parse(openRouterUrl),
-        headers: {
-          'Authorization': 'Bearer $apiKey',
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://github.com/Thee-Unruly/PitSpot',
-          'X-Title': 'Amanda PitSpot',
-        },
-        body: jsonEncode({
-          'model': model,
-          'messages': [
-            {'role': 'system', 'content': systemPrompt},
-            {'role': 'user', 'content': 'Analyze this sermon transcript:\n\n$rawTranscript'},
-          ],
-          'temperature': 0.3,
-        }),
-      ).timeout(const Duration(seconds: 45));
+        Uri.parse(endpoint),
+        headers: headers,
+        body: jsonEncode(body),
+      ).timeout(const Duration(seconds: 40));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -80,65 +105,76 @@ Return ONLY pure JSON without markdown codeblock syntax.
         final parsed = jsonDecode(cleanJsonStr);
         return _formatAnalysisResults(sermonId, parsed);
       } else {
-        debugPrint('OpenRouter API Error: ${response.statusCode} - ${response.body}');
-        return _generateFallbackAnalysis(sermonId, rawTranscript);
+        debugPrint('LLM API Error (${isGroq ? "Groq" : "OpenRouter"}): ${response.statusCode} - ${response.body}');
+        return await _generateDynamicTranscriptAnalysis(sermonId, cleanTranscript);
       }
     } catch (e) {
-      debugPrint('OpenRouter Exception: $e');
-      return _generateFallbackAnalysis(sermonId, rawTranscript);
+      debugPrint('LLM Exception: $e');
+      return await _generateDynamicTranscriptAnalysis(sermonId, cleanTranscript);
     }
   }
 
-  /// Interactive sermon Q&A assistant (inspired by Velora's "Apply what you've learned").
+  /// Interactive sermon Q&A assistant for Ask Velora (Screenshot 2).
   Future<String> askSermonQuestion({
     required String question,
     required String sermonTitle,
     required String transcript,
     required String sermonSummary,
     required String apiKey,
-    String model = 'anthropic/claude-3.5-sonnet',
+    String model = 'openai/gpt-oss-120b',
   }) async {
     if (apiKey.trim().isEmpty) {
-      return 'I would love to help you reflect on "$sermonTitle"! To enable live AI answers, please configure your OpenRouter API key in Settings.';
+      return 'I would love to help you reflect on "$sermonTitle"! To enable live AI reflection, please save your Groq API key in Settings.';
     }
 
+    final isGroq = _isGroqKey(apiKey);
+    final endpoint = isGroq ? groqUrl : openRouterUrl;
+    final targetModel = isGroq
+        ? (model.startsWith('llama-') ? 'openai/gpt-oss-120b' : model)
+        : model;
+
     final systemPrompt = '''
-You are Amanda, an insightful Christian AI companion. You are discussing the sermon titled "$sermonTitle".
-The summary of the message is: "$sermonSummary".
-Answer the user's question with warmth, biblical depth, and direct relevance to what was preached in the sermon transcript.
-Keep answers concise (2-4 paragraphs), practical, and encouraging.
+You are Velora, a deeply reflective and biblically grounded Christian AI companion. You are discussing the sermon titled "$sermonTitle".
+The theme of the message: "$sermonSummary".
+Answer the user's question with theological richness, warmth, practical Christian living application, and direct relevance to what was preached in the sermon transcript.
+Keep answers structured, concise (2-4 brief paragraphs), and encouraging.
 Transcript:
 $transcript
 ''';
 
     try {
+      final headers = <String, String>{
+        'Authorization': 'Bearer ${apiKey.trim()}',
+        'Content-Type': 'application/json',
+      };
+      if (!isGroq) {
+        headers['HTTP-Referer'] = 'https://velora.bible';
+        headers['X-Title'] = 'Velora Bible Companion';
+      }
+
       final response = await http.post(
-        Uri.parse(openRouterUrl),
-        headers: {
-          'Authorization': 'Bearer $apiKey',
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://github.com/Thee-Unruly/PitSpot',
-          'X-Title': 'Amanda PitSpot',
-        },
+        Uri.parse(endpoint),
+        headers: headers,
         body: jsonEncode({
-          'model': model,
+          'model': targetModel,
           'messages': [
             {'role': 'system', 'content': systemPrompt},
             {'role': 'user', 'content': question},
           ],
           'temperature': 0.5,
         }),
-      ).timeout(const Duration(seconds: 30));
+      ).timeout(const Duration(seconds: 25));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['choices'][0]['message']['content'] ?? 'No response received.';
+        return data['choices'][0]['message']['content'] ?? 'No response received from Velora.';
       } else {
-        return 'Could not reach Amanda AI. Please check your API key and connection.';
+        debugPrint('Ask Velora API Error: ${response.statusCode} - ${response.body}');
+        return 'Could not reach Velora AI. Please check your Groq API key and network connection.';
       }
     } catch (e) {
-      debugPrint('Sermon Q&A Exception: $e');
-      return 'Unable to process your question at this moment. Please try again.';
+      debugPrint('Ask Velora Exception: $e');
+      return 'Unable to process your question at this moment. Please check your connection and try again.';
     }
   }
 
@@ -209,130 +245,173 @@ $transcript
     };
   }
 
-  Map<String, dynamic> _generateFallbackAnalysis(String sermonId, String rawTranscript) {
-    final scriptures = [
-      ScriptureMention(
-        id: '${sermonId}_sc_1',
-        sermonId: sermonId,
-        citation: 'Romans 8:28',
-        verseText: 'And we know that in all things God works for the good of those who love him, who have been called according to his purpose.',
-        timestamp: '00:04:12',
-      ),
-      ScriptureMention(
-        id: '${sermonId}_sc_2',
-        sermonId: sermonId,
-        citation: 'Philippians 4:13',
-        verseText: 'I can do all things through Christ who strengthens me.',
-        timestamp: '00:22:15',
-      ),
-    ];
+  /// Dynamically extracts key points, detects scriptures from bible.csv,
+  /// creates real timeline segments, and constructs a devotional from the user's ACTUAL transcript.
+  Future<Map<String, dynamic>> _generateDynamicTranscriptAnalysis(
+    String sermonId,
+    String rawTranscript,
+  ) async {
+    final text = rawTranscript.trim();
 
-    final notes = SermonNotes(
-      id: '${sermonId}_notes',
-      sermonId: sermonId,
-      summary: 'Sunday pitstop message encouraging believers that God aligns all circumstances for good, especially when serving faithful duty in church.',
-      mainPoints: [
-        'God uses the pitstop moments to recharge your faith.',
-        'Surrender is greater than striving for human perfection.',
-        'Your quiet service behind the scenes is seen and honored by God.',
-      ],
-      quotableLines: [
-        'God is not looking for your perfection, He is looking for your surrender.',
-        'Eternity is long, so take time to receive God’s Word.',
-      ],
-      scriptures: scriptures,
-    );
+    final detectedList = _detector.detectDetailedReferences(text);
+    final scriptures = <ScriptureMention>[];
 
-    final segments = [
-      TranscriptSegment(
-        id: '${sermonId}_seg_1',
-        sermonId: sermonId,
-        start: '00:04:12',
-        end: '00:04:45',
-        speaker: 'Pastor John',
-        text: 'Turn with me to Romans 8:28. The Word of God promises us that all things work together for good to those who love God and are called according to His purpose.',
-        tags: ['scripture_reference', 'key_point'],
-        verseIds: ['Romans 8:28'],
-      ),
-      TranscriptSegment(
-        id: '${sermonId}_seg_2',
-        sermonId: sermonId,
-        start: '00:11:03',
-        end: '00:11:35',
-        speaker: 'Pastor John',
-        text: 'My wife told me yesterday that my sermons are getting longer, and I told her eternity is long too!',
-        tags: ['joke', 'quotable'],
-        verseIds: [],
-      ),
-      TranscriptSegment(
-        id: '${sermonId}_seg_3',
-        sermonId: sermonId,
-        start: '00:22:47',
-        end: '00:23:15',
-        speaker: 'Pastor John',
-        text: 'Let me say that again: God is not looking for your perfection, He is looking for your surrender.',
-        tags: ['key_point', 'quotable'],
-        verseIds: [],
-      ),
-      TranscriptSegment(
-        id: '${sermonId}_seg_4',
-        sermonId: sermonId,
-        start: '00:35:10',
-        end: '00:36:00',
-        speaker: 'Pastor John',
-        text: 'If you feel that tug on your heart right now to rededicate your life to Him, come forward as we pray.',
-        tags: ['altar_call'],
-        verseIds: [],
-      ),
-    ];
+    for (int i = 0; i < detectedList.length; i++) {
+      final det = detectedList[i];
+      final verseObj = await _bibleService.fetchVerseText(det.citation);
+      scriptures.add(
+        ScriptureMention(
+          id: '${sermonId}_sc_${i + 1}',
+          sermonId: sermonId,
+          citation: det.citation,
+          verseText: verseObj.text,
+          timestamp: '00:${(i * 15).toString().padLeft(2, '0')}',
+          type: det.type,
+        ),
+      );
+    }
+
+    final sentences = text
+        .split(RegExp(r'(?<=[.?!])\s+|\n+'))
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+
+    String summary;
+    if (sentences.isEmpty) {
+      summary = 'Live service recording session. Real-time audio and speech captured.';
+    } else if (sentences.length <= 3) {
+      summary = sentences.join(' ');
+    } else {
+      summary = sentences.take(3).join(' ');
+    }
+
+    final mainPoints = <String>[];
+    if (sentences.isNotEmpty) {
+      for (final s in sentences) {
+        if (s.length > 20 && !mainPoints.contains(s)) {
+          mainPoints.add(s);
+          if (mainPoints.length >= 4) break;
+        }
+      }
+    }
+    if (mainPoints.isEmpty) {
+      mainPoints.add(text.isNotEmpty ? text : 'Recorded live message segment.');
+    }
+
+    final quotableLines = <String>[];
+    for (final s in sentences) {
+      if (s.length > 15 && s.length < 120 && !quotableLines.contains(s)) {
+        quotableLines.add(s);
+        if (quotableLines.length >= 3) break;
+      }
+    }
+
+    final segments = <TranscriptSegment>[];
+    if (sentences.isEmpty) {
+      segments.add(
+        TranscriptSegment(
+          id: '${sermonId}_seg_1',
+          sermonId: sermonId,
+          start: '00:00:00',
+          end: '00:00:30',
+          speaker: 'Speaker',
+          text: text.isNotEmpty ? text : 'Live sermon message segment.',
+          tags: ['key_point'],
+          verseIds: scriptures.map((s) => s.citation).toList(),
+        ),
+      );
+    } else {
+      for (int i = 0; i < sentences.length; i++) {
+        final sentence = sentences[i];
+        final startSec = i * 20;
+        final endSec = (i + 1) * 20;
+        final startStr = '00:${(startSec ~/ 60).toString().padLeft(2, '0')}:${(startSec % 60).toString().padLeft(2, '0')}';
+        final endStr = '00:${(endSec ~/ 60).toString().padLeft(2, '0')}:${(endSec % 60).toString().padLeft(2, '0')}';
+
+        final tags = <String>['key_point'];
+        final detectedInSentence = _detector.detectReferences(sentence);
+        if (detectedInSentence.isNotEmpty) {
+          tags.add('scripture_reference');
+        }
+        if (sentence.length < 60) {
+          tags.add('quotable');
+        }
+
+        segments.add(
+          TranscriptSegment(
+            id: '${sermonId}_seg_${i + 1}',
+            sermonId: sermonId,
+            start: startStr,
+            end: endStr,
+            speaker: 'Speaker',
+            text: sentence,
+            tags: tags,
+            verseIds: detectedInSentence,
+          ),
+        );
+      }
+    }
+
+    final linkedCitations = scriptures.map((s) => s.citation).toList();
+    final firstCitation = linkedCitations.isNotEmpty ? linkedCitations.first : 'Scripture Study';
 
     final devotional = [
       DevotionalDay(
         id: '${sermonId}_dev_1',
         sermonId: sermonId,
         dayNumber: 1,
-        title: 'Trusting the Pitstop',
-        reflectionText: 'Even when serving frantically, God invites you into His presence to receive spiritual nourishment.',
-        promptQuestion: 'Where do you need to pause and allow God to refresh your spirit today?',
-        linkedVerses: ['Romans 8:28'],
+        title: 'Receiving the Word',
+        reflectionText: 'Reflect on today\'s service message: "$summary"',
+        promptQuestion: 'What specific thought from today\'s message spoke most directly to you?',
+        linkedVerses: linkedCitations.isNotEmpty ? [firstCitation] : [],
       ),
       DevotionalDay(
         id: '${sermonId}_dev_2',
         sermonId: sermonId,
         dayNumber: 2,
-        title: 'Surrender Over Perfection',
-        reflectionText: 'God does not demand perfection before using you; He asks for a willing heart.',
-        promptQuestion: 'What burden are you holding onto that God is asking you to surrender?',
-        linkedVerses: ['Philippians 4:13'],
+        title: 'Walking in Obedience',
+        reflectionText: 'Take the truths spoken today and examine how your daily routine can align with God’s purpose.',
+        promptQuestion: 'What practical step can you take today in response to what you heard?',
+        linkedVerses: linkedCitations,
       ),
       DevotionalDay(
         id: '${sermonId}_dev_3',
         sermonId: sermonId,
         dayNumber: 3,
-        title: 'Strength in the Shadows',
-        reflectionText: 'Your ushering, media, or hospitality work is vital to kingdom service.',
-        promptQuestion: 'How can you encourage a fellow team member who is serving this week?',
-        linkedVerses: ['Romans 8:28', 'Philippians 4:13'],
+        title: 'Faith in Action',
+        reflectionText: 'Live out the core takeaway: ${mainPoints.first}',
+        promptQuestion: 'How can you share this encouragement with someone in your church or family?',
+        linkedVerses: linkedCitations,
       ),
       DevotionalDay(
         id: '${sermonId}_dev_4',
         sermonId: sermonId,
         dayNumber: 4,
-        title: 'Renewed Purpose',
-        reflectionText: 'All things are orchestrated by God for your eternal good and His glory.',
-        promptQuestion: 'What setback can you reframe as a setup for God’s purpose?',
-        linkedVerses: ['Romans 8:28'],
+        title: 'Renewing Your Mind',
+        reflectionText: 'Meditate on the scriptures and reflections shared during this sermon message.',
+        promptQuestion: 'Where do you need God\'s strength to persist in faith this week?',
+        linkedVerses: linkedCitations.isNotEmpty ? [linkedCitations.last] : [],
       ),
       DevotionalDay(
         id: '${sermonId}_dev_5',
         sermonId: sermonId,
         dayNumber: 5,
-        title: 'Walking in Boldness',
-        reflectionText: 'Take the message of Sunday into your workplace and family throughout the week.',
-        promptQuestion: 'Who can you share today’s scripture encouragement with?',
-        linkedVerses: ['Philippians 4:13'],
+        title: 'Standing Firm in Fellowship',
+        reflectionText: 'Rejoice in the fellowship and continuous spiritual nourishment provided by God’s Word.',
+        promptQuestion: 'Who can you pray for today to be strengthened in their walk of faith?',
+        linkedVerses: linkedCitations,
       ),
     ];
+
+    final notes = SermonNotes(
+      id: '${sermonId}_notes',
+      sermonId: sermonId,
+      summary: summary,
+      mainPoints: mainPoints,
+      quotableLines: quotableLines,
+      scriptures: scriptures,
+    );
 
     return {
       'notes': notes,

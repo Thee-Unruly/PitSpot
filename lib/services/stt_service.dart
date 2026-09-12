@@ -4,14 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class STTService {
-  /// Transcribe audio from a file using OpenAI Whisper.
-  ///
-  /// When [useFallback] is true (default), returns a hardcoded sample transcript
-  /// if the API call fails or no API key is provided. This preserves the demo
-  /// experience when no credentials are configured.
-  ///
-  /// Set [useFallback] to false for live chunk transcription where returning
-  /// sample data would cause false-positive scripture detections.
+  /// Transcribe audio from a file using Groq Whisper (ultra fast) or OpenAI Whisper.
   Future<String> transcribeAudio({
     required String audioPath,
     required String apiKey,
@@ -26,13 +19,16 @@ class STTService {
       return useFallback ? _fallbackTranscript() : '';
     }
 
+    final isGroq = apiKey.trim().startsWith('gsk_');
+    final endpoint = isGroq
+        ? 'https://api.groq.com/openai/v1/audio/transcriptions'
+        : 'https://api.openai.com/v1/audio/transcriptions';
+    final modelName = isGroq ? 'whisper-large-v3' : 'whisper-1';
+
     try {
-      final request = http.MultipartRequest(
-        'POST',
-        Uri.parse('https://api.openai.com/v1/audio/transcriptions'),
-      );
-      request.headers['Authorization'] = 'Bearer $apiKey';
-      request.fields['model'] = 'whisper-1';
+      final request = http.MultipartRequest('POST', Uri.parse(endpoint));
+      request.headers['Authorization'] = 'Bearer ${apiKey.trim()}';
+      request.fields['model'] = modelName;
       request.fields['response_format'] = 'json';
       request.files.add(await http.MultipartFile.fromPath('file', audioPath));
 
@@ -43,7 +39,7 @@ class STTService {
         final data = jsonDecode(response.body);
         return data['text'] ?? (useFallback ? _fallbackTranscript() : '');
       } else {
-        debugPrint('Whisper STT Error: ${response.statusCode} - ${response.body}');
+        debugPrint('Whisper STT Error (${isGroq ? "Groq" : "OpenAI"}): ${response.statusCode} - ${response.body}');
         return useFallback ? _fallbackTranscript() : '';
       }
     } catch (e) {
@@ -54,11 +50,10 @@ class STTService {
 
   String _fallbackTranscript() {
     return '''
-Good morning church! Turn with me to Romans 8:28. The Word of God promises us that all things work together for good to those who love God and are called according to His purpose.
-You might be in a difficult season right now. You might feel like the pitstop is taking too long. My wife told me yesterday that my sermons are getting longer, and I told her eternity is long too!
-Let me say that again: God is not looking for your perfection, He is looking for your surrender.
-Remember Philippians 4:13: I can do all things through Christ who strengthens me. When you serve in ushering, in media, in worship, God sees your service.
-If you feel that tug on your heart right now to rededicate your life to Him, come forward as we pray.
+Good morning church! Turn with me to Philippians 4:13. The Word of God reminds us that in Christ, you have strength for every need.
+And we also know from Romans 8:28 that all things work together for the good of those who love God and are called according to His purpose.
+God is not looking for your perfection, He is looking for your surrender.
+Let's hold fast to His promises as we pray together.
     ''';
   }
 }

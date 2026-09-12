@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/app_state.dart';
+import '../theme/app_theme.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -15,11 +16,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late String _selectedModel;
 
   final List<String> _models = [
+    'openai/gpt-oss-120b',
+    'openai/gpt-oss-20b',
+    'qwen/qwen3.8-27b',
+    'qwen/qwen3.6-27b',
+    'groq/compound-mini',
     'anthropic/claude-3.5-sonnet',
-    'anthropic/claude-3-haiku',
     'openai/gpt-4o',
-    'google/gemini-2.0-flash-001',
-    'meta-llama/llama-3.3-70b-instruct',
   ];
 
   @override
@@ -47,7 +50,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Settings saved successfully!')),
+      const SnackBar(content: Text('Groq / AI credentials saved successfully!')),
     );
     Navigator.pop(context);
   }
@@ -55,39 +58,90 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.darkBackground,
       appBar: AppBar(
-        title: const Text('Amanda Settings'),
+        title: const Text('Velora AI Settings'),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16.0),
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.all(20.0),
         children: [
-          const Text(
-            'OpenRouter Integration',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber),
+          // Groq Provider Badge
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1B1E2D),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.primaryAmber.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryAmber.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.bolt, color: AppTheme.primaryAmber, size: 24),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'High-Speed Groq Engine Active',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Powers real-time sermon analysis, Ask Velora Q&A, and Whisper transcriptions.',
+                        style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 24),
+
           const Text(
-            'Enter your OpenRouter API Key to enable live Claude 3.5 Sonnet sermon analysis, moment tagging, and devotional generation.',
-            style: TextStyle(color: Colors.white70, fontSize: 13),
+            'Groq / OpenRouter API Key',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.primaryAmber),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 6),
+          const Text(
+            'Enter your Groq API credentials (gsk_...). Supports GPT-OSS-120B, Qwen & Whisper-large-v3.',
+            style: TextStyle(color: Colors.white70, fontSize: 12),
+          ),
+          const SizedBox(height: 12),
           TextField(
             controller: _apiKeyController,
             obscureText: true,
+            style: const TextStyle(color: Colors.white, fontSize: 13),
             decoration: const InputDecoration(
-              labelText: 'OpenRouter API Key',
-              hintText: 'sk-or-v1-...',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.key, color: Colors.amber),
+              hintText: 'gsk_... or sk-or-...',
+              prefixIcon: Icon(Icons.key, color: AppTheme.primaryAmber),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
+
+          const Text(
+            'Inference Model',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.primaryAmber),
+          ),
+          const SizedBox(height: 10),
           DropdownButtonFormField<String>(
             initialValue: _selectedModel,
+            dropdownColor: AppTheme.darkSurface,
+            style: const TextStyle(color: Colors.white, fontSize: 13),
             decoration: const InputDecoration(
-              labelText: 'OpenRouter LLM Model',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.psychology, color: Colors.blueAccent),
+              prefixIcon: Icon(Icons.psychology, color: Color(0xFFC084FC)),
             ),
             items: _models.map((m) {
               return DropdownMenuItem(value: m, child: Text(m));
@@ -96,38 +150,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               if (val != null) setState(() => _selectedModel = val);
             },
           ),
-          const SizedBox(height: 24),
-          const Text(
-            'Whisper STT Integration (Optional)',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Enter an OpenAI API Key for direct Whisper speech transcription (or leave empty to use OpenRouter API key).',
-            style: TextStyle(color: Colors.white70, fontSize: 13),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _whisperKeyController,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'Whisper / OpenAI Key',
-              hintText: 'sk-...',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.mic, color: Colors.amber),
-            ),
-          ),
           const SizedBox(height: 32),
+
           ElevatedButton.icon(
             onPressed: _save,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.amber,
+              backgroundColor: AppTheme.primaryAmber,
               foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
-            icon: const Icon(Icons.save),
-            label: const Text('Save Credentials & Settings', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            icon: const Icon(Icons.save, size: 20),
+            label: const Text('Save Settings', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

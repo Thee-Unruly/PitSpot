@@ -17,12 +17,12 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
   final BibleService _bibleService = BibleService();
   final TextEditingController _searchController = TextEditingController();
 
-  String _selectedTranslation = 'NIV';
+  String _selectedTranslation = 'English (KJV)';
   List<BibleVerse> _results = [];
   bool _isSearching = false;
 
   // Velora-Inspired Multi-Passage Tabs
-  final List<String> _passageTabs = ['Romans 8:28', 'Philippians 4:13', 'Jeremiah 29:11'];
+  final List<String> _passageTabs = ['Philippians 4:13', 'Romans 8:28', 'Jeremiah 29:11'];
   int _activeTabIndex = 0;
 
   @override
@@ -58,7 +58,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
     });
 
     final citation = _passageTabs[index];
-    final verse = await _bibleService.fetchVerseText(citation);
+    final verse = await _bibleService.fetchVerseText(citation, translation: _selectedTranslation);
     setState(() {
       _results = [verse];
       _searchController.text = citation;
@@ -104,7 +104,6 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
       _isSearching = false;
     });
 
-    // If query looks like citation, add as tab
     if (RegExp(r'\d').hasMatch(query)) {
       if (!_passageTabs.contains(query.trim())) {
         setState(() {
@@ -143,8 +142,9 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
     }
 
     return Scaffold(
+      backgroundColor: AppTheme.darkBackground,
       appBar: AppBar(
-        title: const Text('Bible Reader'),
+        title: const Text('Smart Bible'),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
@@ -153,10 +153,10 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
               dropdownColor: AppTheme.darkSurface,
               underline: const SizedBox.shrink(),
               icon: const Icon(Icons.translate, color: AppTheme.primaryAmber),
-              items: ['NIV', 'KJV', 'SUV'].map((t) {
+              items: BibleService.availableTranslations.keys.map((t) {
                 return DropdownMenuItem(
                   value: t,
-                  child: Text(t, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  child: Text(t, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                 );
               }).toList(),
               onChanged: (val) {
@@ -173,7 +173,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
         children: [
           // Velora-Inspired Passage Tabs Bar
           Container(
-            color: const Color(0xFF141628),
+            color: const Color(0xFF121420),
             height: 48,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
@@ -190,11 +190,11 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: isActive ? Colors.amber.withValues(alpha: 0.2) : const Color(0xFF1F223C),
+                        color: isActive ? AppTheme.primaryAmber.withValues(alpha: 0.18) : const Color(0xFF1B1E2E),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: isActive ? Colors.amber : Colors.white12,
-                          width: isActive ? 1.5 : 1,
+                          color: isActive ? AppTheme.primaryAmber : Colors.white12,
+                          width: isActive ? 1.4 : 1,
                         ),
                       ),
                       child: Row(
@@ -202,14 +202,14 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
                         children: [
                           Icon(
                             Icons.auto_stories,
-                            size: 14,
-                            color: isActive ? Colors.amber : Colors.white54,
+                            size: 13,
+                            color: isActive ? AppTheme.primaryAmber : Colors.white54,
                           ),
                           const SizedBox(width: 6),
                           Text(
                             tabCitation,
                             style: TextStyle(
-                              color: isActive ? Colors.amber : Colors.white70,
+                              color: isActive ? AppTheme.primaryAmber : Colors.white70,
                               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                               fontSize: 12,
                             ),
@@ -221,7 +221,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
                               child: Icon(
                                 Icons.close,
                                 size: 14,
-                                color: isActive ? Colors.amber.withValues(alpha: 0.8) : Colors.white38,
+                                color: isActive ? AppTheme.primaryAmber.withValues(alpha: 0.8) : Colors.white38,
                               ),
                             ),
                           ],
@@ -236,19 +236,18 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
 
           // Search & Filter Box
           Padding(
-            padding: const EdgeInsets.all(14.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
             child: TextField(
               controller: _searchController,
               onSubmitted: _performSearch,
               decoration: InputDecoration(
-                hintText: 'Search verse or citation (e.g. Romans 8:28, Philippians)...',
+                hintText: 'Search verse or citation (e.g. Philippians 4:13, Romans 8:28)...',
                 hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
                 prefixIcon: const Icon(Icons.search, color: AppTheme.primaryAmber),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.arrow_forward, color: AppTheme.primaryAmber),
                   onPressed: () => _performSearch(_searchController.text),
                 ),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                 filled: true,
                 fillColor: AppTheme.darkSurface,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -256,10 +255,10 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
             ),
           ),
 
-          // Quick Filter Chips from Sermon or Common References
+          // Quick Filter Chips
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
                 if (appState.currentNotes != null)
@@ -267,22 +266,22 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
                     return Padding(
                       padding: const EdgeInsets.only(right: 8.0),
                       child: ActionChip(
-                        avatar: const Icon(Icons.auto_awesome, size: 14, color: Color(0xFF67E8F9)),
+                        avatar: const Icon(Icons.auto_awesome, size: 14, color: Color(0xFF38BDF8)),
                         label: Text(sc.citation),
-                        backgroundColor: const Color(0xFF191B2E),
-                        side: const BorderSide(color: Color(0xFF67E8F9), width: 0.8),
-                        labelStyle: const TextStyle(color: Color(0xFF67E8F9), fontSize: 11, fontWeight: FontWeight.bold),
+                        backgroundColor: const Color(0xFF161A2B),
+                        side: const BorderSide(color: Color(0xFF38BDF8), width: 0.8),
+                        labelStyle: const TextStyle(color: Color(0xFF38BDF8), fontSize: 11, fontWeight: FontWeight.bold),
                         onPressed: () => _addNewTab(sc.citation),
                       ),
                     );
                   }),
-                ...['Romans 8:28', 'Philippians 4:13', 'Jeremiah 29:11', 'John 3:16', 'Yohana 3:16'].map((citation) {
+                ...['Philippians 4:13', 'Romans 8:28', 'Jeremiah 29:11', 'John 3:16', 'Psalm 23:1', 'Isaiah 40:31'].map((citation) {
                   return Padding(
                     padding: const EdgeInsets.only(right: 8.0),
                     child: ActionChip(
-                      avatar: const Icon(Icons.bookmark_outline, size: 14, color: Colors.amber),
+                      avatar: const Icon(Icons.bookmark_outline, size: 14, color: AppTheme.primaryAmber),
                       label: Text(citation),
-                      backgroundColor: AppTheme.darkCard,
+                      backgroundColor: AppTheme.darkSurface,
                       labelStyle: const TextStyle(color: Colors.white70, fontSize: 11),
                       onPressed: () => _addNewTab(citation),
                     ),
@@ -300,77 +299,77 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
                 : _results.isEmpty
                     ? const Center(
                         child: Text(
-                          'No matching Bible verses found.\nTry searching "Romans" or "Philippians".',
+                          'No matching Bible verses found.\nTry searching "Philippians" or "Romans".',
                           textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.white38),
                         ),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.all(14),
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.all(16),
                         itemCount: _results.length,
                         itemBuilder: (context, index) {
                           final verse = _results[index];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(color: Colors.amber.withValues(alpha: 0.15)),
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 14),
+                            padding: const EdgeInsets.all(18.0),
+                            decoration: BoxDecoration(
+                              color: AppTheme.darkSurface,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: AppTheme.darkCardBorder),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(18.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Text(
-                                            verse.reference,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          verse.reference,
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.primaryAmber,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            verse.translation,
                                             style: const TextStyle(
-                                              fontSize: 18,
+                                              color: Color(0xFF38BDF8),
                                               fontWeight: FontWeight.bold,
-                                              color: AppTheme.primaryAmber,
+                                              fontSize: 10,
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                            decoration: BoxDecoration(
-                                              color: AppTheme.primaryBlue.withValues(alpha: 0.2),
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                            child: Text(
-                                              verse.translation,
-                                              style: const TextStyle(
-                                                color: AppTheme.primaryBlue,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 11,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.copy, size: 18, color: Colors.white54),
-                                        tooltip: 'Copy verse',
-                                        onPressed: () => _copyVerse(verse),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    verse.text,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Color(0xFFF1F5F9),
-                                      fontFamily: 'serif',
-                                      height: 1.6,
+                                        ),
+                                      ],
                                     ),
+                                    IconButton(
+                                      icon: const Icon(Icons.copy, size: 18, color: Colors.white54),
+                                      tooltip: 'Copy verse',
+                                      onPressed: () => _copyVerse(verse),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  verse.text,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Color(0xFFF1F5F9),
+                                    fontFamily: 'serif',
+                                    height: 1.65,
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           );
                         },
@@ -381,4 +380,3 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
     );
   }
 }
-
