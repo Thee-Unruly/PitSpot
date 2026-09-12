@@ -21,7 +21,6 @@ class AppTheme {
         primary: primaryAmber,
         secondary: primaryBlue,
         surface: darkSurface,
-        background: darkBackground,
         onPrimary: Colors.black,
         onSurface: Colors.white,
       ),
@@ -36,7 +35,7 @@ class AppTheme {
           fontWeight: FontWeight.bold,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: darkCard,
         elevation: 2,
         shape: RoundedRectangleBorder(

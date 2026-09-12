@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/models.dart';
 import '../services/app_state.dart';
 import '../theme/app_theme.dart';
 
@@ -117,10 +116,10 @@ class _SermonNotesScreenState extends State<SermonNotesScreen> with SingleTicker
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
-                    crossAxisAlignment: CrossAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: const [
+                      const Row(
+                        children: [
                           Icon(Icons.auto_awesome, color: AppTheme.primaryAmber, size: 20),
                           SizedBox(width: 8),
                           Text(
@@ -132,7 +131,7 @@ class _SermonNotesScreenState extends State<SermonNotesScreen> with SingleTicker
                       const SizedBox(height: 12),
                       Text(
                         notes.summary,
-                        style: const TextStyle(fontSize: 14, color: Colors.white90, height: 1.5),
+                        style: const TextStyle(fontSize: 14, color: Colors.white70, height: 1.5),
                       ),
                     ],
                   ),
@@ -152,7 +151,7 @@ class _SermonNotesScreenState extends State<SermonNotesScreen> with SingleTicker
                   child: Padding(
                     padding: const EdgeInsets.all(14.0),
                     child: Row(
-                      crossAxisAlignment: CrossAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Icon(Icons.check_circle, color: AppTheme.tagKeyPoint, size: 20),
                         const SizedBox(width: 12),
@@ -166,7 +165,7 @@ class _SermonNotesScreenState extends State<SermonNotesScreen> with SingleTicker
                     ),
                   ),
                 );
-              }).toList(),
+              }),
               const SizedBox(height: 20),
 
               // Quotable Quotes Section
@@ -192,7 +191,7 @@ class _SermonNotesScreenState extends State<SermonNotesScreen> with SingleTicker
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontStyle: FontStyle.italic,
-                                color: Colors.white90,
+                                color: Colors.white70,
                               ),
                             ),
                           ),
@@ -200,7 +199,7 @@ class _SermonNotesScreenState extends State<SermonNotesScreen> with SingleTicker
                       ),
                     ),
                   );
-                }).toList(),
+                }),
                 const SizedBox(height: 20),
               ],
 
@@ -216,7 +215,7 @@ class _SermonNotesScreenState extends State<SermonNotesScreen> with SingleTicker
                   child: Padding(
                     padding: const EdgeInsets.all(14.0),
                     child: Column(
-                      crossAxisAlignment: CrossAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -239,7 +238,7 @@ class _SermonNotesScreenState extends State<SermonNotesScreen> with SingleTicker
                         const SizedBox(height: 8),
                         Text(
                           '"${sc.verseText}"',
-                          style: const TextStyle(fontSize: 13, color: Colors.white80, fontStyle: FontStyle.italic),
+                          style: const TextStyle(fontSize: 13, color: Colors.white70, fontStyle: FontStyle.italic),
                         ),
                         const SizedBox(height: 10),
                         Align(
@@ -256,7 +255,7 @@ class _SermonNotesScreenState extends State<SermonNotesScreen> with SingleTicker
                     ),
                   ),
                 );
-              }).toList(),
+              }),
             ],
           ),
 
@@ -307,7 +306,7 @@ class _SermonNotesScreenState extends State<SermonNotesScreen> with SingleTicker
                       child: Padding(
                         padding: const EdgeInsets.all(14),
                         child: Column(
-                          crossAxisAlignment: CrossAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -322,7 +321,7 @@ class _SermonNotesScreenState extends State<SermonNotesScreen> with SingleTicker
                                     return Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: _getTagColor(t).withOpacity(0.2),
+                                        color: _getTagColor(t).withValues(alpha: 0.2),
                                         borderRadius: BorderRadius.circular(8),
                                         border: Border.all(color: _getTagColor(t), width: 1),
                                       ),
@@ -342,7 +341,7 @@ class _SermonNotesScreenState extends State<SermonNotesScreen> with SingleTicker
                             const SizedBox(height: 8),
                             Text(
                               seg.text,
-                              style: const TextStyle(fontSize: 14, color: Colors.white90, height: 1.4),
+                              style: const TextStyle(fontSize: 14, color: Colors.white70, height: 1.4),
                             ),
                           ],
                         ),

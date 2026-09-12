@@ -1,30 +1,42 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:untitled/main.dart';
+import 'package:untitled/models/models.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  test('Sermon model serialization and deserialization test', () {
+    final sermon = Sermon(
+      id: 'sermon_123',
+      title: 'Sunday Pitstop Sermon',
+      date: '2026-09-12',
+      preacher: 'Pastor John',
+      status: 'ready',
+      themeSummary: 'Surrender over perfection',
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    final map = sermon.toMap();
+    expect(map['id'], 'sermon_123');
+    expect(map['title'], 'Sunday Pitstop Sermon');
+    expect(map['preacher'], 'Pastor John');
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    final deserialized = Sermon.fromMap(map);
+    expect(deserialized.id, sermon.id);
+    expect(deserialized.title, sermon.title);
+    expect(deserialized.preacher, sermon.preacher);
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  test('ScriptureMention model test', () {
+    final mention = ScriptureMention(
+      id: 'sc_1',
+      sermonId: 'sermon_123',
+      citation: 'Romans 8:28',
+      verseText: 'All things work together for good.',
+      timestamp: '00:04:12',
+    );
+
+    final map = mention.toMap();
+    expect(map['citation'], 'Romans 8:28');
+
+    final deserialized = ScriptureMention.fromMap(map);
+    expect(deserialized.citation, 'Romans 8:28');
+    expect(deserialized.timestamp, '00:04:12');
   });
 }

@@ -6,7 +6,6 @@ import 'screens/home_service_screen.dart';
 import 'screens/sermon_notes_screen.dart';
 import 'screens/devotional_screen.dart';
 import 'screens/bible_reader_screen.dart';
-import 'screens/settings_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

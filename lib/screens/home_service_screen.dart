@@ -45,7 +45,7 @@ class HomeServiceScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.amber.withOpacity(0.2),
+                      color: Colors.amber.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.local_gas_station, color: Colors.amber, size: 28),
@@ -53,7 +53,7 @@ class HomeServiceScreen extends StatelessWidget {
                   const SizedBox(width: 16),
                   const Expanded(
                     child: Column(
-                      crossAxisAlignment: CrossAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Sermon Pitstop Mode',
@@ -89,22 +89,22 @@ class HomeServiceScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.amber.withOpacity(0.4),
+                    color: Colors.amber.withValues(alpha: 0.4),
                     blurRadius: 16,
                     offset: const Offset(0, 8),
                   )
                 ],
               ),
-              child: Column(
+              child: const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(Icons.mic, size: 56, color: Colors.black),
                   SizedBox(height: 12),
                   Text(
                     'START SERVICE MODE',
                     style: TextStyle(
                       fontSize: 20,
-                      fontWeight: FontWeight.black,
+                      fontWeight: FontWeight.w900,
                       color: Colors.black,
                       letterSpacing: 1.2,
                     ),
@@ -150,14 +150,15 @@ class HomeServiceScreen extends StatelessWidget {
                   subtitle: Text('${sermon.preacher} • ${sermon.date}'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white54),
                   onTap: () async {
+                    final messenger = ScaffoldMessenger.of(context);
                     await appState.loadSermonFromVault(sermon.id);
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       SnackBar(content: Text('Loaded ${sermon.title}')),
                     );
                   },
                 ),
               );
-            }).toList(),
+            }),
         ],
       ),
     );
@@ -185,9 +186,9 @@ class ServiceRecordingView extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(Icons.fiber_manual_record, color: Colors.red, size: 16),
                   SizedBox(width: 8),
                   Text(
@@ -208,7 +209,7 @@ class ServiceRecordingView extends StatelessWidget {
                     height: 140,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.red.withOpacity(0.15),
+                      color: Colors.red.withValues(alpha: 0.15),
                       border: Border.all(color: Colors.redAccent, width: 2),
                     ),
                     child: Center(
@@ -238,13 +239,13 @@ class ServiceRecordingView extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: const Color(0xFF191B2E),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.amber.withOpacity(0.4)),
+                    border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: const [
+                      const Row(
+                        children: [
                           Icon(Icons.auto_awesome, color: Colors.amber, size: 16),
                           SizedBox(width: 6),
                           Text(
@@ -262,7 +263,7 @@ class ServiceRecordingView extends StatelessWidget {
                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
                           ),
                         );
-                      }).toList(),
+                      }),
                     ],
                   ),
                 ),

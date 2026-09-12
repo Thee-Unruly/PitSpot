@@ -111,7 +111,7 @@ class _DevotionalScreenState extends State<DevotionalScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
-                      crossAxisAlignment: CrossAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
@@ -138,7 +138,7 @@ class _DevotionalScreenState extends State<DevotionalScreen> {
                         const SizedBox(height: 16),
                         Text(
                           currentDay.reflectionText,
-                          style: const TextStyle(fontSize: 15, color: Colors.white90, height: 1.5),
+                          style: const TextStyle(fontSize: 15, color: Colors.white70, height: 1.5),
                         ),
                       ],
                     ),
@@ -166,7 +166,7 @@ class _DevotionalScreenState extends State<DevotionalScreen> {
                         },
                       ),
                     );
-                  }).toList(),
+                  }),
                   const SizedBox(height: 20),
                 ],
 
@@ -176,10 +176,10 @@ class _DevotionalScreenState extends State<DevotionalScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
-                      crossAxisAlignment: CrossAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: const [
+                        const Row(
+                          children: [
                             Icon(Icons.psychology, color: AppTheme.primaryAmber, size: 22),
                             SizedBox(width: 8),
                             Text(
@@ -191,7 +191,7 @@ class _DevotionalScreenState extends State<DevotionalScreen> {
                         const SizedBox(height: 10),
                         Text(
                           currentDay.promptQuestion,
-                          style: const TextStyle(fontSize: 14, color: Colors.white90, fontStyle: FontStyle.italic, height: 1.4),
+                          style: const TextStyle(fontSize: 14, color: Colors.white70, fontStyle: FontStyle.italic, height: 1.4),
                         ),
                       ],
                     ),
@@ -221,8 +221,9 @@ class _DevotionalScreenState extends State<DevotionalScreen> {
                   alignment: Alignment.centerRight,
                   child: ElevatedButton.icon(
                     onPressed: () async {
+                      final messenger = ScaffoldMessenger.of(context);
                       await appState.savePrayerNote(currentDay.id, _prayerController.text.trim());
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         const SnackBar(content: Text('Prayer journal entry saved to vault!')),
                       );
                     },

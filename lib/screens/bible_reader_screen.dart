@@ -174,7 +174,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
                             child: Padding(
                               padding: const EdgeInsets.all(16.0),
                               child: Column(
-                                crossAxisAlignment: CrossAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -190,7 +190,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                         decoration: BoxDecoration(
-                                          color: AppTheme.primaryBlue.withOpacity(0.2),
+                                          color: AppTheme.primaryBlue.withValues(alpha: 0.2),
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                         child: Text(
@@ -209,7 +209,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
                                     verse.text,
                                     style: const TextStyle(
                                       fontSize: 15,
-                                      color: Colors.white90,
+                                      color: Colors.white70,
                                       height: 1.5,
                                     ),
                                   ),
