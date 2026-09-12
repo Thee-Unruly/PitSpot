@@ -71,20 +71,24 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         },
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.radio_button_checked),
-            label: 'Service Mode',
+            icon: Icon(Icons.sensors),
+            activeIcon: Icon(Icons.sensors, color: AppTheme.primaryAmber),
+            label: 'Service Relay',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.description),
-            label: 'Notes & Tags',
+            icon: Icon(Icons.psychology_outlined),
+            activeIcon: Icon(Icons.psychology, color: AppTheme.primaryAmber),
+            label: 'Notes & AI',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.auto_stories),
+            icon: Icon(Icons.favorite_outline),
+            activeIcon: Icon(Icons.favorite, color: AppTheme.primaryAmber),
             label: 'Devotional',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book),
-            label: 'Bible Reader',
+            icon: Icon(Icons.menu_book_outlined),
+            activeIcon: Icon(Icons.menu_book, color: AppTheme.primaryAmber),
+            label: 'Smart Bible',
           ),
         ],
       ),

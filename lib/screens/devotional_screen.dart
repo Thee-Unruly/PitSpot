@@ -80,15 +80,27 @@ class _DevotionalScreenState extends State<DevotionalScreen> {
               itemBuilder: (context, index) {
                 final day = devotionalDays[index];
                 final isSelected = index == _selectedDayIndex;
+                final hasJournal = day.userPrayerResponse != null && day.userPrayerResponse!.isNotEmpty;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8.0),
                   child: ChoiceChip(
                     selected: isSelected,
+                    avatar: hasJournal
+                        ? Icon(Icons.check, size: 14, color: isSelected ? Colors.black : AppTheme.primaryAmber)
+                        : null,
                     label: Text('Day ${day.dayNumber}'),
                     selectedColor: AppTheme.primaryAmber,
+                    backgroundColor: const Color(0xFF1B1E34),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: isSelected ? AppTheme.primaryAmber : Colors.white12,
+                      ),
+                    ),
                     labelStyle: TextStyle(
                       color: isSelected ? Colors.black : Colors.white70,
                       fontWeight: FontWeight.bold,
+                      fontSize: 12,
                     ),
                     onSelected: (selected) {
                       if (selected) {
@@ -108,8 +120,12 @@ class _DevotionalScreenState extends State<DevotionalScreen> {
               children: [
                 // Day Title Card
                 Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    side: BorderSide(color: AppTheme.primaryAmber.withValues(alpha: 0.25)),
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(20.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -118,19 +134,29 @@ class _DevotionalScreenState extends State<DevotionalScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: AppTheme.primaryAmber,
-                                borderRadius: BorderRadius.circular(12),
+                                color: AppTheme.primaryAmber.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: AppTheme.primaryAmber),
                               ),
                               child: Text(
                                 'DAY ${currentDay.dayNumber}',
-                                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12),
+                                style: const TextStyle(
+                                  color: AppTheme.primaryAmber,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 11,
+                                  letterSpacing: 0.8,
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: Text(
                                 currentDay.title,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ],
@@ -138,7 +164,12 @@ class _DevotionalScreenState extends State<DevotionalScreen> {
                         const SizedBox(height: 16),
                         Text(
                           currentDay.reflectionText,
-                          style: const TextStyle(fontSize: 15, color: Colors.white70, height: 1.5),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            color: Color(0xFFE2E8F0),
+                            height: 1.6,
+                            fontFamily: 'serif',
+                          ),
                         ),
                       ],
                     ),
@@ -150,17 +181,24 @@ class _DevotionalScreenState extends State<DevotionalScreen> {
                 if (currentDay.linkedVerses.isNotEmpty) ...[
                   const Text(
                     'Scriptures for Reflection',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryAmber),
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppTheme.primaryAmber),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   ...currentDay.linkedVerses.map((verseRef) {
                     return Card(
-                      color: const Color(0xFF1E2038),
+                      color: const Color(0xFF141728),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(color: Color(0x3367E8F9)),
+                      ),
                       margin: const EdgeInsets.only(bottom: 10),
                       child: ListTile(
-                        leading: const Icon(Icons.bookmark, color: AppTheme.primaryAmber),
-                        title: Text(verseRef, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                        trailing: const Icon(Icons.open_in_new, size: 18, color: Colors.white54),
+                        leading: const Icon(Icons.bookmark_outline, color: Color(0xFF67E8F9)),
+                        title: Text(
+                          verseRef,
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF67E8F9), fontSize: 14),
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.white54),
                         onTap: () {
                           appState.setTargetBibleReference(verseRef);
                         },
@@ -172,26 +210,35 @@ class _DevotionalScreenState extends State<DevotionalScreen> {
 
                 // Prompt Question Card
                 Card(
-                  color: const Color(0xFF22253F),
+                  color: const Color(0xFF161930),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(color: Colors.amber.withValues(alpha: 0.3)),
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(18.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Row(
                           children: [
-                            Icon(Icons.psychology, color: AppTheme.primaryAmber, size: 22),
+                            Icon(Icons.psychology, color: AppTheme.primaryAmber, size: 20),
                             SizedBox(width: 8),
                             Text(
-                              'Reflection Question',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primaryAmber),
+                              'Guided Reflection Prompt',
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.primaryAmber),
                             ),
                           ],
                         ),
                         const SizedBox(height: 10),
                         Text(
                           currentDay.promptQuestion,
-                          style: const TextStyle(fontSize: 14, color: Colors.white70, fontStyle: FontStyle.italic, height: 1.4),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFFCBD5E1),
+                            fontStyle: FontStyle.italic,
+                            height: 1.45,
+                          ),
                         ),
                       ],
                     ),
@@ -202,18 +249,16 @@ class _DevotionalScreenState extends State<DevotionalScreen> {
                 // Prayer Journal Entry Field
                 const Text(
                   'Personal Prayer Journal',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryAmber),
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppTheme.primaryAmber),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 TextField(
                   controller: _prayerController,
                   maxLines: 4,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
                   decoration: const InputDecoration(
-                    hintText: 'What is God saying to you through this sermon today?',
+                    hintText: 'What is God saying to your heart today? Write a prayer or reflection...',
                     hintStyle: TextStyle(color: Colors.white38, fontSize: 13),
-                    border: OutlineInputBorder(),
-                    filled: true,
-                    fillColor: Color(0xFF191B2E),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -224,16 +269,17 @@ class _DevotionalScreenState extends State<DevotionalScreen> {
                       final messenger = ScaffoldMessenger.of(context);
                       await appState.savePrayerNote(currentDay.id, _prayerController.text.trim());
                       messenger.showSnackBar(
-                        const SnackBar(content: Text('Prayer journal entry saved to vault!')),
+                        const SnackBar(content: Text('Prayer journal entry saved to SQLite vault!')),
                       );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryAmber,
                       foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    icon: const Icon(Icons.save),
-                    label: const Text('Save Journal Entry', style: TextStyle(fontWeight: FontWeight.bold)),
+                    icon: const Icon(Icons.save, size: 18),
+                    label: const Text('Save Journal Entry', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   ),
                 ),
               ],

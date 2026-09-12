@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../services/app_state.dart';
+import '../theme/app_theme.dart';
 import 'processing_screen.dart';
 import 'settings_screen.dart';
 
@@ -38,18 +39,22 @@ class HomeServiceScreen extends StatelessWidget {
         children: [
           // Header Banner
           Card(
-            color: const Color(0xFF22253F),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(color: AppTheme.primaryAmber.withValues(alpha: 0.3)),
+            ),
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(18.0),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: Colors.amber.withValues(alpha: 0.2),
+                      color: AppTheme.primaryAmber.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
+                      border: Border.all(color: AppTheme.primaryAmber.withValues(alpha: 0.4)),
                     ),
-                    child: const Icon(Icons.local_gas_station, color: Colors.amber, size: 28),
+                    child: const Icon(Icons.sensors, color: AppTheme.primaryAmber, size: 28),
                   ),
                   const SizedBox(width: 16),
                   const Expanded(
@@ -57,13 +62,18 @@ class HomeServiceScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Sermon Pitstop Mode',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                          'Sermon Service Relay',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 0.3,
+                          ),
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Serve your duty without missing spiritual nourishment.',
-                          style: TextStyle(fontSize: 12, color: Colors.white70),
+                          'Live listening, realtime scripture detection & automated devotionals.',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8), height: 1.3),
                         ),
                       ],
                     ),
@@ -74,7 +84,7 @@ class HomeServiceScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // Big Start Service Button
+          // Big Start Service Button (Velora Ambient Glow)
           GestureDetector(
             onTap: () async {
               await appState.startServiceMode();
@@ -83,37 +93,38 @@ class HomeServiceScreen extends StatelessWidget {
               height: 180,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFFFB703), Color(0xFFFB8500)],
+                  colors: [Color(0xFFF59E0B), Color(0xFFD97706), Color(0xFFB45309)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.amber.withValues(alpha: 0.4),
-                    blurRadius: 16,
-                    offset: const Offset(0, 8),
-                  )
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                    blurRadius: 24,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 10),
+                  ),
                 ],
               ),
               child: const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.mic, size: 56, color: Colors.black),
-                  SizedBox(height: 12),
+                  Icon(Icons.mic, size: 52, color: Colors.black),
+                  SizedBox(height: 10),
                   Text(
-                    'START SERVICE MODE',
+                    'START SERVICE RELAY',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 19,
                       fontWeight: FontWeight.w900,
                       color: Colors.black,
-                      letterSpacing: 1.2,
+                      letterSpacing: 1.4,
                     ),
                   ),
                   SizedBox(height: 6),
                   Text(
-                    'Locks into low-glare background capture',
-                    style: TextStyle(fontSize: 12, color: Colors.black87),
+                    'Locks into low-glare background sermon capture',
+                    style: TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
@@ -122,19 +133,35 @@ class HomeServiceScreen extends StatelessWidget {
           const SizedBox(height: 28),
 
           // Vault Sermons List
-          const Text(
-            'Recent Sermon Vault',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Recent Sermon Vault',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryAmber),
+              ),
+              if (appState.vaultSermons.isNotEmpty)
+                Text(
+                  '${appState.vaultSermons.length} sermons',
+                  style: const TextStyle(fontSize: 12, color: Colors.white54),
+                ),
+            ],
           ),
           const SizedBox(height: 12),
           if (appState.vaultSermons.isEmpty)
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24.0),
+              padding: EdgeInsets.symmetric(vertical: 32.0),
               child: Center(
-                child: Text(
-                  'No recorded sermons yet. Tap "START SERVICE MODE" above during your next church service.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white54),
+                child: Column(
+                  children: [
+                    Icon(Icons.library_books_outlined, size: 48, color: Colors.white24),
+                    SizedBox(height: 12),
+                    Text(
+                      'No recorded sermons yet.\nTap "START SERVICE RELAY" above during your next church service.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white38, fontSize: 13, height: 1.4),
+                    ),
+                  ],
                 ),
               ),
             )
@@ -142,14 +169,30 @@ class HomeServiceScreen extends StatelessWidget {
             ...appState.vaultSermons.map((sermon) {
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: const BorderSide(color: Color(0x26FFFFFF)),
+                ),
                 child: ListTile(
-                  leading: const CircleAvatar(
-                    backgroundColor: Color(0xFF3A86EF),
-                    child: Icon(Icons.church, color: Colors.white),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.3)),
+                    ),
+                    child: const Icon(Icons.church_outlined, color: AppTheme.primaryBlue, size: 22),
                   ),
-                  title: Text(sermon.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('${sermon.preacher} • ${sermon.date}'),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white54),
+                  title: Text(
+                    sermon.title,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white),
+                  ),
+                  subtitle: Text(
+                    '${sermon.preacher} • ${sermon.date}',
+                    style: const TextStyle(color: Colors.white54, fontSize: 12),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.white38),
                   onTap: () async {
                     final messenger = ScaffoldMessenger.of(context);
                     await appState.loadSermonFromVault(sermon.id);
